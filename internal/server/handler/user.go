@@ -98,7 +98,7 @@ func (h *UserHandler) UserLogin(c *gin.Context) {
 			err = fmt.Errorf("jwt set token failed")
 			return
 		}
-		err := h.cacheService.Repo.Set(fmt.Sprint(user.ID), nil, 10*time.Hour)
+		err := h.cacheService.Repo.Set(fmt.Sprint(user.ID), user, 10*time.Hour)
 		if err != nil {
 			err = er.New(err, er.UserNotFound).SetStatus(http.StatusNotFound)
 			return

@@ -2,11 +2,16 @@ package server
 
 import (
 	"blog_api/internal/server/handler"
+	"blog_api/internal/server/mw"
+	"blog_api/internal/server/mw/jwt"
+	"blog_api/pkg/cache"
+	"blog_api/utils/types"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-pg/pg/v10"
+	"github.com/gomodule/redigo/redis"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	ginlogrus "github.com/toorop/gin-logrus"
@@ -30,7 +35,9 @@ type Options struct {
 
 	Config          *viper.Viper
 	Log             *logrus.Logger
-	PostgresDB      *pg.DB `name:"userdb"`
+	PostgresDB      *pg.DB      `name:"blogdb"`
+	Redis           *redis.Pool `name:"redisWorker"`
+	CacheService    *cache.Service
 	PostHandler     *handler.PostHandler
 	UserHandler     *handler.UserHandler
 	UserRoleHandler *handler.UserRoleHandler
@@ -54,14 +61,15 @@ func SetupRouter(o *Options) (router *gin.Engine) {
 
 	// Logs all panic to error log
 	router.Use(ginlogrus.Logger(o.Log), gin.Recovery())
-
+	router.Use(mw.RoleCheckMiddleware(o.CacheService, types.BLOG_MANAGEMENT))
+	authMiddleware := jwt.SetAuthMiddleware(o.PostgresDB)
 	// Health routes
 	router.GET("/_healthz", HealthHandler(o))
 	router.GET("/_readyz", HealthHandler(o))
 
 	rootRouter := router.Group("/")
 
-	v1Routes(rootRouter, o)
+	v1RoutesUsers(rootRouter, authMiddleware, o)
 
 	return
 }

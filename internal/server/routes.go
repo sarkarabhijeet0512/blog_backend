@@ -7,19 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func v1Routes(router *gin.RouterGroup, o *Options) {
-	r := router.Group("/v1/api/")
-
-	// middlewares
-	r.Use(mw.ErrorHandlerX(o.Log))
-	// add new routes here
-	r.POST("/post", o.PostHandler.UpsertPost)
-	r.GET("/posts", o.PostHandler.GetPosts)
-	r.GET("posts/{id}", o.PostHandler.GetPosts)
-	r.GET("posts/{id}", o.PostHandler.DeletePost)
-}
 func v1RoutesUsers(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware, o *Options) {
-	r := router.Group("/v1/auth/api/")
+	r := router.Group("/v1/api/")
 	// middlewares
 	r.Use(mw.ErrorHandlerX(o.Log))
 	r.PUT("/user_registration", o.UserHandler.UserRegistration)
@@ -30,4 +19,8 @@ func v1RoutesUsers(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware
 	r.GET("/user/assigned_role", authMiddleware.MiddlewareFunc(), o.UserRoleHandler.UserRoleAssignedDetails)
 	r.GET("/role_details/:role_id", authMiddleware.MiddlewareFunc(), o.UserRoleHandler.RoleDetails)
 	r.GET("/role_list", authMiddleware.MiddlewareFunc(), o.UserRoleHandler.RoleList)
+	r.POST("/post", authMiddleware.MiddlewareFunc(), o.PostHandler.UpsertPost)
+	r.GET("/posts", authMiddleware.MiddlewareFunc(), o.PostHandler.GetPosts)
+	r.GET("posts/{id}", authMiddleware.MiddlewareFunc(), o.PostHandler.GetPosts)
+	r.GET("posts/{id}", authMiddleware.MiddlewareFunc(), o.PostHandler.DeletePost)
 }

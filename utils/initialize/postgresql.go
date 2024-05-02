@@ -1,6 +1,9 @@
 package initialize
 
 import (
+	"blog_api/pkg/posts"
+	"blog_api/pkg/rbac"
+	"blog_api/pkg/user"
 	"context"
 	"fmt"
 	"os"
@@ -28,7 +31,7 @@ const (
 type DBOut struct {
 	fx.Out
 
-	DB *pg.DB `name:"userdb"`
+	DB *pg.DB `name:"blogdb"`
 }
 type dbLogger struct{}
 
@@ -102,7 +105,15 @@ func postgresqlInit(dbName, dbUser, dbPassword, dbHost, dbPort string, log *logr
 }
 
 func createSchema(db *pg.DB) error {
-	models := []interface{}{}
+	models := []interface{}{
+		(*user.User)(nil),
+		(*rbac.UserRole)(nil),
+		(*rbac.Role)(nil),
+		(*rbac.RolePermission)(nil),
+		(*rbac.Permission)(nil),
+		(*rbac.Resource)(nil),
+		(*posts.Post)(nil),
+	}
 
 	for _, model := range models {
 		err := db.Model(model).CreateTable(&orm.CreateTableOptions{

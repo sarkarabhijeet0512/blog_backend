@@ -12,9 +12,7 @@ import (
 // Module provides common application dependencies
 var Module = fx.Options(
 	fx.Provide(
-		newLogger,
 		InitLogrus,
-		NewZoho,
 	),
 	fx.Invoke(
 		LivenessProbe,

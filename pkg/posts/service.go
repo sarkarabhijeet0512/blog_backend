@@ -4,7 +4,6 @@ import (
 	model "blog_api/utils/models"
 	"context"
 
-	zoho "github.com/schmorrison/Zoho"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -16,7 +15,7 @@ type Service struct {
 }
 
 // NewService returns a user service object.
-func NewService(conf *viper.Viper, log *logrus.Logger, zoho *zoho.Zoho, Repo Repository) *Service {
+func NewService(conf *viper.Viper, log *logrus.Logger, Repo Repository) *Service {
 	return &Service{conf: conf, log: log, Repo: Repo}
 }
 
