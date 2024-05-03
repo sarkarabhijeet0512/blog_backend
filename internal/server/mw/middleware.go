@@ -8,7 +8,7 @@ import (
 
 	"blog_api/er"
 	"blog_api/pkg/cache"
-	model "blog_api/utils/models"
+	"blog_api/pkg/rbac"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -41,31 +41,32 @@ func ErrorHandlerX(log *logrus.Logger) gin.HandlerFunc {
 	}
 }
 
-func RoleCheckMiddleware(rdb *cache.Service, role int) gin.HandlerFunc {
+func RoleCheckMiddleware(rdb *cache.Service, roleID int) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, ok := c.Get("id")
 		if !ok {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Please login uisng your secured credentials!"})
 			c.Abort()
 		}
-		userRoles := model.UserRoles{}
+		userRoles := []rbac.UserRole{}
 		err := rdb.Get(fmt.Sprint(userID), &userRoles)
 		if err != nil {
 			err = er.New(err, er.Unauthorized).SetStatus(http.StatusUnauthorized)
 			c.Abort()
 		}
-		roleFound := false
-		for _, userRole := range userRoles.Resource {
-			if role == userRole {
-				roleFound = true
-				break
+
+		for _, userRole := range userRoles {
+			for _, role := range userRole.Roles {
+				for _, permission := range role.RolePermission {
+					if roleID == permission.ResourceID {
+						c.Next()
+						return
+					}
+				}
 			}
 		}
-		if !roleFound {
-			er.New(errors.New("invalid access"), er.Unauthorized).SetStatus(http.StatusUnauthorized)
-			c.Abort()
-			return
-		}
-		c.Next()
+		er.New(errors.New("invalid access"), er.Unauthorized).SetStatus(http.StatusUnauthorized)
+		c.Abort()
+		return
 	}
 }

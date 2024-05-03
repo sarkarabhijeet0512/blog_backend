@@ -4,6 +4,7 @@ import (
 	"blog_api/er"
 	"blog_api/internal/server/mw/jwt"
 	"blog_api/pkg/cache"
+	"blog_api/pkg/rbac"
 	"blog_api/pkg/user"
 	"context"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	model "blog_api/utils/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-pg/pg/v10"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,12 +23,14 @@ type UserHandler struct {
 	jwtMiddleware *jwt.GinJWTMiddleware
 	userService   *user.Service
 	cacheService  *cache.Service
+	rbacService   *rbac.Service
 }
 
 func newUserHandler(
 	log *logrus.Logger,
 	userService *user.Service,
 	cacheService *cache.Service,
+	rbacService *rbac.Service,
 ) *UserHandler {
 	c := &gin.Context{}
 	return &UserHandler{
@@ -34,6 +38,7 @@ func newUserHandler(
 		jwt.SetAuthMiddleware(userService.Repo.GetDBConnection(c)),
 		userService,
 		cacheService,
+		rbacService,
 	}
 }
 
@@ -80,8 +85,6 @@ func (h *UserHandler) UserLogin(c *gin.Context) {
 		}
 	}()
 
-	//check if location pings are present for today
-	//if not, then verify that rider should be at store before proceeding
 	if err = c.ShouldBind(&req); err != nil {
 		err = er.New(err, er.UncaughtException).SetStatus(http.StatusUnprocessableEntity)
 		return
@@ -98,7 +101,12 @@ func (h *UserHandler) UserLogin(c *gin.Context) {
 			err = fmt.Errorf("jwt set token failed")
 			return
 		}
-		err := h.cacheService.Repo.Set(fmt.Sprint(user.ID), user, 10*time.Hour)
+		userRole, err := h.rbacService.FetchUserRole(dCtx, user.ID)
+		if err != nil && err != pg.ErrNoRows {
+			err = er.New(err, er.UncaughtException).SetStatus(http.StatusUnprocessableEntity)
+			return
+		}
+		err = h.cacheService.Repo.Set(fmt.Sprint(user.ID), userRole, 10*time.Hour)
 		if err != nil {
 			err = er.New(err, er.UserNotFound).SetStatus(http.StatusNotFound)
 			return
@@ -107,5 +115,4 @@ func (h *UserHandler) UserLogin(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 		return
 	}
-
 }

@@ -76,7 +76,21 @@ func (h *PostHandler) GetPosts(c *gin.Context) {
 		err = er.New(err, er.UncaughtException).SetStatus(http.StatusBadRequest)
 		return
 	}
-	data, err := h.postService.GetPosts(dCtx, req)
+	if req.ID == 0 {
+		id, ok := c.Params.Get("id")
+		if !ok {
+			err := errors.New("id not provided")
+			err = er.New(err, er.UncaughtException).SetStatus(http.StatusBadRequest)
+			return
+		}
+		ID, err := strconv.Atoi(id)
+		if err != nil {
+			err = er.New(err, er.UncaughtException).SetStatus(http.StatusBadRequest)
+			return
+		}
+		req.ID = ID
+	}
+	data, pagination, err := h.postService.GetPosts(dCtx, req)
 	if err != nil {
 		err = er.New(err, er.UncaughtException).SetStatus(http.StatusUnprocessableEntity)
 		return
@@ -84,9 +98,52 @@ func (h *PostHandler) GetPosts(c *gin.Context) {
 	res.Message = "Successfully retrieved posts"
 	res.Success = true
 	res.Data = data
+	res.Meta = pagination
 	c.JSON(http.StatusOK, res)
 }
 
+func (h *PostHandler) UpdatePost(c *gin.Context) {
+	var (
+		err  error
+		res  = model.GenericRes{}
+		req  = &posts.Post{}
+		dCtx = context.Background()
+	)
+	defer func() {
+		if err != nil {
+			c.Error(err)
+			h.log.WithField("span", res).Warn(err.Error())
+			return
+		}
+	}()
+	if err = c.ShouldBind(&req); err != nil {
+		err = er.New(err, er.UncaughtException).SetStatus(http.StatusBadRequest)
+		return
+	}
+	if req.ID == 0 {
+		id, ok := c.Params.Get("id")
+		if !ok {
+			err := errors.New("id not provided")
+			err = er.New(err, er.UncaughtException).SetStatus(http.StatusBadRequest)
+			return
+		}
+		ID, err := strconv.Atoi(id)
+		if err != nil {
+			err = er.New(err, er.UncaughtException).SetStatus(http.StatusBadRequest)
+			return
+		}
+		req.ID = ID
+	}
+	err = h.postService.UpdatePost(dCtx, req)
+	if err != nil {
+		err = er.New(err, er.UncaughtException).SetStatus(http.StatusUnprocessableEntity)
+		return
+	}
+	res.Message = "Successfully retrieved posts"
+	res.Success = true
+	res.Data = req
+	c.JSON(http.StatusOK, res)
+}
 func (h *PostHandler) DeletePost(c *gin.Context) {
 	var (
 		err  error

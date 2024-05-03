@@ -3,14 +3,18 @@ package handler
 import (
 	"blog_api/er"
 	"blog_api/internal/server/mw/jwt"
+	"blog_api/pkg/cache"
 	"blog_api/pkg/rbac"
 	"blog_api/pkg/user"
 	model "blog_api/utils/models"
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-pg/pg/v10"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,12 +23,14 @@ type UserRoleHandler struct {
 	jwtMiddleware   *jwt.GinJWTMiddleware
 	userRoleService *rbac.Service
 	userService     *user.Service
+	cacheService    *cache.Service
 }
 
 func newUserRoleHandler(
 	log *logrus.Logger,
 	userRoleService *rbac.Service,
 	userService *user.Service,
+	cacheService *cache.Service,
 ) *UserRoleHandler {
 	c := &gin.Context{}
 	return &UserRoleHandler{
@@ -32,6 +38,7 @@ func newUserRoleHandler(
 		jwt.SetAuthMiddleware(userService.Repo.GetDBConnection(c)),
 		userRoleService,
 		userService,
+		cacheService,
 	}
 }
 
@@ -96,6 +103,17 @@ func (h *UserRoleHandler) RoleAssignment(c *gin.Context) {
 	err = h.userRoleService.AssignRole(dCtx, req)
 	if err != nil {
 		err = er.New(err, er.UncaughtException).SetStatus(http.StatusBadRequest)
+		return
+	}
+
+	userRole, err := h.userRoleService.FetchUserRole(dCtx, req.UserID)
+	if err != nil && err != pg.ErrNoRows {
+		err = er.New(err, er.UncaughtException).SetStatus(http.StatusUnprocessableEntity)
+		return
+	}
+	err = h.cacheService.Repo.Set(fmt.Sprint(req.UserID), userRole, 10*time.Hour)
+	if err != nil {
+		err = er.New(err, er.UserNotFound).SetStatus(http.StatusNotFound)
 		return
 	}
 

@@ -69,7 +69,7 @@ func SetupRouter(o *Options) (router *gin.Engine) {
 
 	rootRouter := router.Group("/")
 
-	v1RoutesUsers(rootRouter, authMiddleware, o)
+	v1Routes(rootRouter, authMiddleware, o)
 
 	return
 }

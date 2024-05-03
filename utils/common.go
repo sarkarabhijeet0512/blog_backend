@@ -8,11 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -62,39 +57,6 @@ func setField(v reflect.Value, fieldName string, value interface{}) {
 	}
 }
 
-// UploadFileToS3 uploads the file to S3
-func UploadFileToS3(conf *viper.Viper, req S3UploadReq) (string, error) {
-	awsRegion := conf.GetString(AWSREGION)
-	awsBucketName := conf.GetString(AWSBUCKET)
-	keyID := conf.GetString(KEYID)
-	secretKey := conf.GetString(SECRETKEY)
-
-	// Create a session using the default region and credentials
-	sess, _ := session.NewSession(&aws.Config{
-		Region:      aws.String(awsRegion),
-		Credentials: credentials.NewStaticCredentials(keyID, secretKey, ""),
-	})
-
-	// Create an S3 service client
-	s3Client := s3.New(sess)
-
-	// Specify the parameters for the S3 bucket and file to be uploaded
-	params := &s3.PutObjectInput{
-		Bucket:      aws.String(awsBucketName),
-		Key:         aws.String(req.FileName),
-		ContentType: aws.String(req.ContentType),
-		Body:        req.File,
-	}
-
-	// Upload the file to the S3 bucket
-	_, err := s3Client.PutObject(params)
-	if err != nil {
-		return "", err
-	}
-
-	awsUri := "https://" + awsBucketName + "." + "s3-" + awsRegion + ".amazonaws.com/"
-	return (awsUri + req.FileName), nil
-}
 func HashPassword(password string) string {
 	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes)

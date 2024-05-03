@@ -23,7 +23,10 @@ func (s Service) UpsertPost(ctx context.Context, post *Post) error {
 	return s.Repo.upsertPost(ctx, post)
 }
 
-func (s Service) GetPosts(ctx context.Context, filter model.PostFilter) ([]Post, error) {
+func (s Service) UpdatePost(ctx context.Context, post *Post) error {
+	return s.Repo.updatePost(ctx, post)
+}
+func (s Service) GetPosts(ctx context.Context, filter model.PostFilter) ([]Post, model.Pagination, error) {
 	return s.Repo.getPosts(ctx, filter)
 }
 func (s Service) DeletePosts(ctx context.Context, ID int) error {
