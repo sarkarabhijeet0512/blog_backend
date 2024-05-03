@@ -17,9 +17,9 @@ var Module = fx.Options(
 type (
 	Post struct {
 		ID            int       `json:"id" pg:"id"`
-		Title         string    `json:"title" pg:"title"`
+		Title         string    `json:"title" pg:"title,unique"`
 		Content       string    `json:"content" pg:"content"`
-		Author        string    `json:"author" pg:"author"`
+		Author        string    `json:"author" pg:"author,unique"`
 		IsActive      *bool     `json:"is_active" pg:"is_active"`
 		Tags          []string  `json:"tags" pg:"tags"`
 		Category      string    `json:"category" pg:"category"`

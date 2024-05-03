@@ -139,7 +139,7 @@ func (h *PostHandler) UpdatePost(c *gin.Context) {
 		err = er.New(err, er.UncaughtException).SetStatus(http.StatusUnprocessableEntity)
 		return
 	}
-	res.Message = "Successfully retrieved posts"
+	res.Message = "Successfully updated posts"
 	res.Success = true
 	res.Data = req
 	c.JSON(http.StatusOK, res)

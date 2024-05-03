@@ -76,7 +76,7 @@ func (r *dbRepo) updatePost(ctx context.Context, post *Post) error {
 	if post.Tags != nil {
 		query.Set("tags=?", post.Tags)
 	}
-	_, err := query.Update()
+	_, err := query.Where("id", post.ID).Update()
 	return err
 }
 
@@ -122,9 +122,11 @@ func (r *dbRepo) getPosts(ctx context.Context, filter model.PostFilter) ([]Post,
 	p.TotalDataCount = count
 	p.CurrentPage = filter.Page
 	p.TotalPages = int(math.Ceil(float64(count) / float64(filter.Limit)))
-	return posts, p, nil
+	return posts, p, err
 }
 
 func (r *dbRepo) deletePosts(ctx context.Context, ID int) error {
-	return nil
+	var post Post
+	_, err := r.db.ModelContext(ctx, &post).Set("is_active=?", false).Where("id=?", ID).Update()
+	return err
 }
