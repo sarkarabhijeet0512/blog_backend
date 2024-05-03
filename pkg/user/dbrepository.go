@@ -20,7 +20,7 @@ type NewRepositoryIn struct {
 	fx.In
 
 	Log *logrus.Logger
-	DB  *pg.DB `name:"userdb"`
+	DB  *pg.DB `name:"blogdb"`
 }
 
 // PGRepo is postgres implementation

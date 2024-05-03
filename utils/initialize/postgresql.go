@@ -6,7 +6,6 @@ import (
 	"blog_api/pkg/user"
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
@@ -94,9 +93,9 @@ func postgresqlInit(dbName, dbUser, dbPassword, dbHost, dbPort string, log *logr
 		return
 	}
 
-	if os.Getenv("MODE") == "server" {
-		createSchema(DB)
-	}
+	// if os.Getenv("MODE") == "server" {
+	createSchema(DB)
+	// }
 	log.Info("Successfully connected!")
 	log.WithFields(logrus.Fields{
 		"database": dbName,

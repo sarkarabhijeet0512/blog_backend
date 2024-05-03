@@ -14,9 +14,9 @@ var Module = fx.Options(
 	fx.Provide(
 		InitLogrus,
 	),
-	fx.Invoke(
-		LivenessProbe,
-	),
+	// fx.Invoke(
+	// 	LivenessProbe,
+	// ),
 )
 
 // LivenessProbe writes an empty at /tmp/_healthz at every 30 seconds
